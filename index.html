@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<style>
+			body, html {
+				margin: 0;
+				padding: 0;
+				font-family: sans-serif;
+				height: 100%;
+				width:100%;
+			}
+
+			.block {
+				width: 100%;
+				height: 100%;
+				background-color: green;
+			}
+
+			.motionYes {
+				background-color: red;
+			}
+
+
+		</style>
+	</head>
+	<body>
+		<script src="/socket.io/socket.io.js"></script>
+		<script>
+			function go() {
+				console.log('go')
+				const blockElm = document.querySelector('.block')
+				const socket = io.connect()
+				socket.on('motion', motionValue => {
+					console.log('motion')
+					blockElm.classList.add('motionYes')
+					setTimeout(() => {
+						blockElm.classList.remove('motionYes')
+					}, 2000)
+
+				})
+			}
+
+			window.addEventListener('load', go)
+
+		</script>
+
+		<div class="block">
+		</div>
+
+	</body>
+</html>
+
