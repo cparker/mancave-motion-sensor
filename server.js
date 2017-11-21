@@ -10,11 +10,14 @@ const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const server = require('http').createServer(app)
 const io = require('socket.io')(server)
-
 const gpio = require('rpi-gpio')
 const { exec } = require('child_process')
+const mqtt = require('mqtt')
 
 const motionPin = process.env.MOTION_PIN || 14
+const MQTT_HOST = process.env.MQTT_HOST || 'mqtt://192.168.1.210'
+const mqttClient = mqtt.connect(MQTT_HOST)
+const studioOffAfterNoMotionMS = process.env.STUDIO_OFF_AFTER_NO_MOTION_MS || 60 * 60 * 1000
 
 let lastMotionTimestamp = (new Date()).getTime()
 
@@ -47,11 +50,19 @@ gpio.on('change', function(channel, value) {
 	}
 })
 
+// check every 30 seconds
 setInterval(() => {
-	io.clients( (error, clients) => {
-		console.log('we have clients', clients)
-	})
-}, 5000)
+	// io.clients( (error, clients) => {
+	// 	console.log('we have clients', clients)
+	// })
+	let now = (new Date()).getTime()
+
+	// send studio off after no motion timeout
+	if (now - lastMotionTimestamp > studioOffAfterNoMotionMS) {
+		mqttClient.publish('hass/studio_off', '')
+	}
+
+}, 30000)
 
 server.listen(port, '0.0.0.0', () => {
 	console.log(`listening on ${port}`)
