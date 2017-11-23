@@ -16,7 +16,15 @@ const mqtt = require('mqtt')
 
 const motionPin = process.env.MOTION_PIN || 14
 const MQTT_HOST = process.env.MQTT_HOST || 'mqtt://192.168.1.210'
-const mqttClient = mqtt.connect(MQTT_HOST)
+
+
+const mqttClient = mqtt.connect(MQTT_HOST, {protocolVersion: 3, protocolId: 'MQIsdp'})
+
+mqttClient.on('connect', function () {
+  mqttClient.subscribe('presence')
+  mqttClient.publish('presence', 'mancave kiosk attached')
+  console.log(`connected to ${MQTT_HOST}`)
+})
 const studioOffAfterNoMotionMS = process.env.STUDIO_OFF_AFTER_NO_MOTION_MS || 60 * 60 * 1000
 
 let lastMotionTimestamp = (new Date()).getTime()
@@ -58,7 +66,9 @@ setInterval(() => {
 	let now = (new Date()).getTime()
 
 	// send studio off after no motion timeout
+    console.log(`time since last motion MS ${now - lastMotionTimestamp}`)
 	if (now - lastMotionTimestamp > studioOffAfterNoMotionMS) {
+		console.log('studio will shutdown now')
 		mqttClient.publish('hass/studio_off', '')
 	}
 
